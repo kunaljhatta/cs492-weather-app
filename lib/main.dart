@@ -1,6 +1,18 @@
 import 'components/location/location.dart';
 import 'package:flutter/material.dart';
 import 'components/bottomNavigation/bottom_navigation.dart';
+import 'models/user_location.dart';
+import 'components/weatherScreen/weather_screen.dart';
+
+
+// TODO:
+//  Create a new weather_screen.dart in a new weatherScreen folder in the components folder. 
+//  main.dart should call this component instead of the Text() in widgetOptions
+//  display the current location in the WeatherScreen() component
+//  if you need help, check the readme for hints on accopmlishing today's todos
+
+
+
 
 void main() {
   runApp(const MyApp());
@@ -32,11 +44,33 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
    int _selectedIndex = 0;
+   List<UserLocation> locations = [];
+   UserLocation? _location;
 
-   // TODO: Create a variable to store the UserLocation
-   // TODO: Create a setter function for the location variable
-   // TODO: Pass the setter function to Location()
-   // See location.dart for more TODO
+   late List<Widget> _widgetOptions = setWidgetOptions();
+
+   List<Widget> setWidgetOptions() {
+        List<Widget> widgetOptions = <Widget>[
+              WeatherScreen(getLocation: getLocation),
+              Location(setLocation: setLocation, getLocation: getLocation, locations: locations),
+              const Text(
+                'Alerts',
+              ),
+            ];
+
+      return widgetOptions;
+   }
+
+   void setLocation(UserLocation location){
+    setState(() {
+      _location = location;
+      _widgetOptions = setWidgetOptions();
+    });
+   }
+
+   UserLocation? getLocation(){
+    return _location;
+   }
 
     // this is the setter function used to set the _selected index value
     void setSelectedIndex(index){
@@ -48,27 +82,11 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
   
-  // This stores the options for each page
-  static const List<Widget> _widgetOptions = <Widget>[
-    Text(
-      'Weather',
-    ),
-    Location(),
-    Text(
-      'Alerts',
-    ),
-  ];
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            _widgetOptions.elementAt(_selectedIndex),
-          ],
-        ),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: _widgetOptions.elementAt(_selectedIndex), // This trailing comma makes auto-formatting nicer for build methods.
       bottomNavigationBar: BottomNavigation(setSelectedIndex: setSelectedIndex),
     );
   }
