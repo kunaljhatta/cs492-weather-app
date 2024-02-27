@@ -2,6 +2,8 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:geocoding/geocoding.dart';
 
+import 'dart:convert';
+
 // User location model
 // Contains required information for:
 // Displaying location to user (city, state, zip)
@@ -16,32 +18,72 @@ class UserLocation {
   String state;
   String zip;
 
-  UserLocation(this.latitude, this.longitude, this.city, this.state, this.zip);
+  UserLocation(
+      {required this.latitude,
+      required this.longitude,
+      required this.city,
+      required this.state,
+      required this.zip});
 
   // This overrides the == operator
   // This allows us to define how we want to establish equality between two UserLocation Objects
   // In this case, I want anything that shares city, state, and zip to be considered equal, even if lat/long are not equal
   @override
-  bool operator==(Object other) =>
-      other is UserLocation && city == other.city && state == other.state && zip == other.zip;
+  bool operator ==(Object other) =>
+      other is UserLocation &&
+      city == other.city &&
+      state == other.state &&
+      zip == other.zip;
 
   // We should alo override the hashCode when we override the == operator
   @override
   int get hashCode => Object.hash(city, state, zip);
-  
-  
+
+  String toJsonString() {
+    Map<String, dynamic> mappedObject = {
+      "latitude": latitude,
+      "longitude": longitude,
+      "city": city,
+      "state": state,
+      "zip": zip
+    };
+
+    return jsonEncode(mappedObject);
+  }
+
+  factory UserLocation.fromJson(Map<String, dynamic> json) {
+    return switch (json) {
+      {
+        'latitude': double latitude,
+        'longitude': double longitude,
+        'city': String city,
+        'state': String state,
+        'zip': String zip
+      } =>
+        UserLocation(
+            latitude: latitude,
+            longitude: longitude,
+            city: city,
+            state: state,
+            zip: zip),
+      _ => throw const FormatException('Failed to load UserLocation.'),
+    };
+  }
 }
 
-Future<UserLocation> getLocationFromAddress(
+Future<UserLocation?> getLocationFromAddress(
     String city, String state, String zip) async {
   // async function that delivers a UserLocation using the city, state, and/or zip
 
   String addressString = "$city $state $zip";
 
   // geocoding can potentially return locations with only partial addresses
-  List<Location> locations = await locationFromAddress(addressString);
-
-  return getLocationFromCoords(locations[0].latitude, locations[0].longitude);
+  try {
+    List<Location> locations = await locationFromAddress(addressString);
+    return getLocationFromCoords(locations[0].latitude, locations[0].longitude);
+  } on NoResultFoundException {
+    return null;
+  }
 }
 
 Future<UserLocation> getLocationFromGPS() async {
@@ -89,7 +131,12 @@ Future<UserLocation> getLocationFromCoords(
     Future.error("Error: Location must be in $allowedNation.");
   }
 
-  return UserLocation(latitude, longitude, city, state, zip);
+  return UserLocation(
+      latitude: latitude,
+      longitude: longitude,
+      city: city,
+      state: state,
+      zip: zip);
 }
 
 // NOTE: THIS FUNCTION IS A HELPER FUNCTION DIRECTLY FROM THE GEOLOCATOR DOCUMENTATION.
